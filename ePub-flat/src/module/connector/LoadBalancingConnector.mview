@@ -1,0 +1,18 @@
+connector LoadBalancedNSConnector {
+
+	require {
+		LoadBalanceRemote
+	}
+
+	ao-composition LoadBalancing {
+		pointcut {
+			callee {
+				interface: NewsRemote;
+				component: NewspaperService;
+			}
+		}
+		advice {
+			service: balanceCall();
+		}		
+	}
+}

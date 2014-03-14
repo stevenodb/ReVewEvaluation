@@ -1,0 +1,44 @@
+application CNN_LBNewspaperApp {//refines LB_NewspaperApp, CNN_Env {
+	host AuthServer					is "signin.cnn.com";
+	host PublishingServerAlt2		is "pub1.cnn.com";
+	
+	host AccountingServer			is "billing.cnn.com";
+	host AccountingServerAlt2		is "billing2.cnn.com";
+	
+	host ServicesServer				is "feature.cnn.com";
+	host ServicesServerAlt2			is "feature2.cnn.com";
+	
+	host Proxy						is "proxy.cnn.com";
+	
+	NewspaperSecurityConnector		secnConn	on PublishingServer;
+	
+	connector NewspaperSecurityConnector {// refines SecuredNewspaperApp.NewspaperSecurityConnector {
+	
+		require {
+			SecurityContext
+		}
+
+		ao-composition ServiceUsage {//refines SecuredNewspaperApp.NewspaperSecurityConnector.ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				caller {
+					component: ! NewsDesk;
+					merge host: ! Intranet;
+				}
+				callee {
+					host: PublishingServer;
+					interface: NewsRemote;
+				}
+			}
+			advice {
+				service: checkSecurityContext(cid);
+				type: around;
+			}
+		}
+	}
+}

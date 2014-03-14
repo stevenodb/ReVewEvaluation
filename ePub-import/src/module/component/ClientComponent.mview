@@ -1,0 +1,10 @@
+component Client {
+	
+	provide {
+		ClientHome	
+	}
+	
+	require {
+		NewsRemote
+	}
+}

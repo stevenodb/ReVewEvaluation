@@ -1,0 +1,36 @@
+abstract application PersonalizedNewspaperApp refines BasicNewspaperApp {
+	
+	host ServicesServer;
+	
+	PersonalizationService				persoServ	on ServicesServer;
+	UserTrackingService					utServ		on ServicesServer;
+	TrackedNewspaperConnector			traNSConn	on ServicesServer;
+	PersonalizedCMSConnector			persCMSConn on ServicesServer;
+
+	connector PersonalizedCMSConnector refines PersonalizedContentConnector {
+		ao-composition personalizeCMS refines PersonalizedContentConnector.PersonalizeContent {
+			pointcut {
+				caller {
+					instance: ns;
+				}
+			}
+		}
+	}
+	
+	connector TrackedNewspaperConnector refines ServiceTrackingConnector {
+		ao-composition TrackViewing refines ServiceTrackingConnector.TrackViewing {
+			pointcut {
+				caller {
+					host: ! NewsDeskServer; 
+				}
+			}
+		}
+		ao-composition TrackListing refines ServiceTrackingConnector.TrackListing {
+			pointcut {
+				caller {
+					host: ! NewsDeskServer;
+				}
+			}
+		}
+	}
+}

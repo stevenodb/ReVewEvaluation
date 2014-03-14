@@ -1,0 +1,10 @@
+component SecurityContextService {
+
+	provide {
+		SecurityContext
+	}
+	
+	require {
+		Authentication
+	}
+}

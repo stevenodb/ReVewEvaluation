@@ -1,0 +1,11 @@
+connector ServiceSecurityConnector refines ServiceUsageConnector {
+
+	require {		SecurityContext	}
+
+	ao-composition ServiceUsage refines ServiceUsageConnector.ServiceUsage {
+		advice {
+			method: checkSecurityContext(cid);
+			type: around;
+		}
+	}
+}

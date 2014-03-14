@@ -1,0 +1,8 @@
+abstract application LoadBalancedNewspaperApp refines BasicNewspaperApp {
+	host Proxy;
+	LoadBalancedNS				lbNS		on Proxy;
+	LoadBalancedNSConnector		lbNSConn	on Proxy;
+	
+	host PublishingServerAlt2;
+	NewspaperService			nsAlt2		on PublishingServerAlt2;
+}

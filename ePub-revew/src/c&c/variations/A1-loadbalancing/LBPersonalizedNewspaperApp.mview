@@ -1,0 +1,34 @@
+abstract application LB_PersonalizedNewspaperApp refines PersonalizedNewspaperApp, LoadBalancedNewspaperApp {
+	
+	host ServicesServerAlt2;
+	
+	PersonalizedCMSConnectorAlt1 		persCMSConn			on ServicesServer;
+	PersonalizedCMSConnectorAlt2 		persCMSConnAlt2		on ServicesServerAlt2;
+	PersonalizationService				persoServAlt2		on ServicesServerAlt2;
+	
+	connector PersonalizedCMSConnectorAlt1 refines PersonalizedCMSConnector {
+		ao-composition personalizeCMS refines PersonalizedCMSConnector.personalizeCMS {
+			pointcut {
+				caller {
+					override instance: ns;
+				}
+			}
+			advice {
+				instance: persoServ;
+			}
+		}	
+	}
+	
+	connector PersonalizedCMSConnectorAlt2 refines PersonalizedCMSConnector {
+		ao-composition personalizeCMS refines PersonalizedCMSConnector.personalizeCMS {
+			pointcut {
+				caller {
+					override instance: nsAlt2;
+				}
+			}
+			advice {
+				instance: persoServAlt2;
+			}
+		}	
+	}
+}

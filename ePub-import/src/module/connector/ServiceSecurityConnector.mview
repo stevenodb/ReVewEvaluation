@@ -1,0 +1,24 @@
+connector ServiceSecurityConnector {//refines ServiceUsageConnector {
+
+	require {
+		SecurityContext
+	}
+
+	ao-composition ServiceUsage {//refines ServiceUsageConnector.ServiceUsage {
+		pointcut {
+			kind: execution;
+			signature:
+				ContentItem fetchArticle(ContentItemId),
+				Collection listArticlesForTag(Tag),
+				Collection listNewestArticles(Integer),
+				Pair listArticlesForCategory(Category);
+			callee {
+				interface: NewsRemote;
+			}
+		}
+		advice {
+			service: checkSecurityContext(cid);
+			type: around;
+		}
+	}
+}

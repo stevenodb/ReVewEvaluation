@@ -1,0 +1,10 @@
+component LoadBalancedNS {
+	
+	provide {
+		LoadBalanceRemote
+	}
+	
+	require {
+		NewsRemote
+	}
+}

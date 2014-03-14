@@ -1,0 +1,13 @@
+component NewsDesk {
+
+	require {
+		ContentBrowseRemote,
+		UserProfileRemote,
+		ContentInputRemote
+	}
+	
+	provide {
+		ManagementRemote,
+		AccountManagementRemote
+	}
+}

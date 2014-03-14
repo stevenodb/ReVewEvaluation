@@ -1,0 +1,33 @@
+abstract application AccountedNewspaperApp {//refines BasicNewspaperApp {
+	
+	host AccountingServer;
+	
+	AccountingService 				accs		on AccountingServer;
+	NewspaperAccountingConnector	accnConn 	on PublishingServer;
+	
+	connector NewspaperAccountingConnector {//refines ServiceAccountingConnector {
+
+		require {
+			AccountingRemote
+		}
+
+		ao-composition ServiceUsage {//refines ServiceAccountingConnector.ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					component: NewspaperService;
+					interface: NewsRemote;
+				}
+			}
+			advice {
+				type: after;
+				service: chargeForService();
+			}
+		}
+	}
+}

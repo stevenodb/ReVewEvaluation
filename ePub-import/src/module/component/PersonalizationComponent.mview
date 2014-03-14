@@ -1,0 +1,11 @@
+component PersonalizationService {
+	
+	provide {
+		PersonalizationRemote
+	}
+
+	require {
+		ContentBrowseRemote,
+		UserProfileRemote
+	}	
+}

@@ -1,0 +1,149 @@
+application NYT_NP_NewspaperApp {
+
+	host PublishingServer			is "published.nytimes.com";
+	host UserManagementServer 		is "customers.nytimes.com";
+	host ContentManagementServer 	is "data.nytimes.com";
+	host NewsDeskServer				is "workers.nytimes.com";
+ 	host ClientTerminal 			is "*";
+	host AuthServer					is "auth.nytimes.com";
+	host AccountingServer			is "accounting.nytimes.com";
+	host ServicesServer				is "plugins.nytimes.com";
+	host Intranet					is "*.private.nytimes.com";
+
+	ContentManagementSystem		cms				on ContentManagementServer;
+	Client						cli				on ClientTerminal;		
+	NewspaperService			ns				on PublishingServer;	
+	UserManagementSystem		ums				on UserManagementServer;
+	NewsDesk					nd				on NewsDeskServer;
+	NewspaperAccnConnector		accnConn 		on PublishingServer;
+	TrackedNewspaperConnector	traNSConn		on ServicesServer;
+	AccountingService 			accs			on AccountingServer;
+	PersonalizedCMSConnector 	persCMSConn		on ServicesServer;
+	PersonalizationService		persoServ		on ServicesServer;
+	UserTrackingService			utServ			on ServicesServer;
+	AuthenticationService		auths			on AuthServer;
+	SecurityContextService		secCtx			on PublishingServer;
+	NewspaperSecurityConnector	secnConn		on PublishingServer;
+
+	connector NewspaperSecurityConnector {
+	
+		require {
+			SecurityContext
+		}
+	
+		ao-composition ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				caller {
+					component: ! NewsDesk;
+					merge host: ! Intranet;
+				}
+				callee {
+					interface: NewsRemote;
+					host: PublishingServer;
+				}
+			}
+			advice {
+				service: checkSecurityContext(cid);
+				type: around;
+			}
+		}
+	}
+	
+	connector NewspaperAccnConnector {
+	
+		require {
+			AccountingRemote
+		}
+	
+		ao-composition ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					interface: NewsRemote;
+					component: NewspaperService;
+				}
+			}
+			advice {
+				type: after;
+				service: chargeForService();
+			} 			
+		}
+	}	
+
+	connector PersonalizedCMSConnector {
+	
+		require {
+			PersonalizationRemote
+		}
+	
+		ao-composition personalizeCMS {
+			pointcut {
+				kind: call;
+				signature: * *(*);
+				callee {
+					interface: ContentBrowseRemote;
+				}
+				caller {
+					// exclude the component doing personalization
+					interface: ! PersonalizationRemote;
+					instance: ns;
+				}
+			}
+			advice {
+				service: personalizeContentBrowseCall();
+				type: around;
+			}
+		}	
+	}
+	
+	connector TrackedNewspaperConnector {
+	
+		require {
+			UserTrackingRemote
+		}
+		
+		ao-composition TrackViewing {
+			pointcut {
+				caller {
+					host: ! NewsDeskServer; 
+				}
+			}
+			advice {
+				service: viewedContentItem(ciID);
+				type: after;
+			}
+		} 
+
+		ao-composition TrackListing {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					interface: NewsRemote;
+				}
+				caller {
+					host: ! NewsDeskServer;
+				}
+			}
+			advice {
+				service: consultedTag(tag);
+				type: after;
+			}			
+		} 
+	}
+}

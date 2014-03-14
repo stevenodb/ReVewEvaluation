@@ -1,0 +1,14 @@
+abstract application BasicNewspaperApp {
+	host PublishingServer;
+	host ClientTerminal;
+	host ContentManagementServer;
+	host UserManagementServer;
+	host NewsDeskServer;
+	host Intranet;
+	
+	ContentManagementSystem		cms		on ContentManagementServer;
+	Client						cli		on ClientTerminal;		
+	NewspaperService			ns		on PublishingServer;	
+	UserManagementSystem		ums		on UserManagementServer;
+	NewsDesk					nd		on NewsDeskServer;
+}

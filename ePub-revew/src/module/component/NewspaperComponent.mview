@@ -1,0 +1,13 @@
+component NewspaperService {
+
+	provide {	
+		NewsRemote,
+		ProfileManagementRemote,
+		ManagementRemote
+	}
+	
+	require {
+		UserProfileRemote, 
+		ContentBrowseRemote
+	}
+}

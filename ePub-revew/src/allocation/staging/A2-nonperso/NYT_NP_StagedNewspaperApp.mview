@@ -1,0 +1,10 @@
+application NYT_NP_StagedNewspaperApp refines StagedNewspaperApp, NYT_NP_NewspaperApp {
+	host StagingServer is "staging.intranet.nytimes.com";
+	
+	StagedNpAccnConnector		accnConn 		on PublishingServer;
+	
+	connector StagedNpAccnConnector refines NewspaperAccountingConnector, StagedNewspaperStemConnector {
+		ao-composition ServiceUsage refines NewspaperAccountingConnector.ServiceUsage, StagedStemCompositon {
+		}
+	}
+}

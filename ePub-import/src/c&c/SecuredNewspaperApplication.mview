@@ -1,0 +1,37 @@
+abstract application SecuredNewspaperApp {//refines BasicNewspaperApp {
+
+	host AuthServer;
+
+	AuthenticationService			auths		on AuthServer;
+	SecurityContextService			secCtx		on PublishingServer;
+	NewspaperSecurityConnector		secnConn	on PublishingServer;
+		
+	connector NewspaperSecurityConnector {// refines ServiceSecurityConnector {
+	
+		require {
+			SecurityContext
+		}
+
+		abstract ao-composition ServiceUsage {//refines ServiceSecurityConnector.ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				caller {
+					component: ! NewsDesk;
+				}
+				callee {
+					host: PublishingServer;
+					interface: NewsRemote;
+				}
+			}
+			advice {
+				service: checkSecurityContext(cid);
+				type: around;
+			}
+		}
+	}
+}

@@ -1,0 +1,10 @@
+application CNN_NP_StagedNewspaperApp refines StagedNewspaperApp, CNN_NP_NewspaperApp {
+	host StagingServer is "staging.intranet.cnn.com";
+	
+	StagedNpAccnConnector		accnConn 		on PublishingServer;
+	
+	connector StagedNpAccnConnector refines NewspaperAccountingConnector, StagedNewspaperStemConnector {
+		ao-composition ServiceUsage refines NewspaperAccountingConnector.ServiceUsage, StagedStemCompositon {
+		}
+	}
+}

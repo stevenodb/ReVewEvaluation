@@ -1,0 +1,111 @@
+application CNN_LB_StagedNewspaperApp //{refines StagedNewspaperApp, CNN_LBNewspaperApp {
+	host StagingServer is "staging.intranet.cnn.com";
+	
+	StagedNpAccnConnectorAlt1	accnConn 		on PublishingServer;
+	StagedNpAccnConnectorAlt2	accnConnAlt2 	on PublishingServer;
+	StagedTrackedNpConnector	traNSConn		on ServicesServer;
+
+	connector StagedNpAccnConnectorAlt1 {//refines	NewspaperAccountingConnectorAlt1, StagedNewspaperStemConnector {
+
+		require {
+			AccountingRemote
+		}
+
+		ao-composition ServiceUsage {//refines NewspaperAccountingConnectorAlt1.ServiceUsage, StagedStemCompositon {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					component: NewspaperService;
+					interface: NewsRemote;
+					override instance: ns;
+					merge host: ! StagingServer;
+				}
+			}
+			advice {
+				type: after;
+				instance: accs;
+				service: chargeForService();
+			}
+		}
+	}	
+
+	connector StagedNpAccnConnectorAlt2 {//refines NewspaperAccountingConnectorAlt2, StagedNewspaperStemConnector {
+
+		require {
+			AccountingRemote
+		}
+
+		ao-composition ServiceUsage {//refines NewspaperAccountingConnectorAlt2.ServiceUsage, StagedStemCompositon {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					component: NewspaperService;
+					override instance: nsAlt2;
+					interface: NewsRemote;
+					merge host: ! StagingServer;
+				}
+			}
+			advice {
+				type: after;
+				service: chargeForService();
+				instance: accsAlt2;			
+			}
+		}
+	}
+	
+	connector StagedTrackedNpConnector {//refines TrackedNewspaperConnector, StagedNewspaperStemConnector {
+	
+		require {
+			UserTrackingRemote
+		}
+		
+		ao-composition TrackViewing {//refines TrackedNewspaperConnector.TrackViewing, StagedStemCompositon {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					merge host: ! StagingServer;
+					interface: NewsRemote;
+				}
+				caller {
+					host: ! NewsDeskServer; 
+				}
+			}
+			advice {
+				service: consultedTag(tag);
+				type: after;
+			}
+		} 
+		
+		ao-composition TrackListing {//refines TrackedNewspaperConnector.TrackListing, StagedStemCompositon {
+			pointcut {
+				kind: execution;
+				signature: ContentItem fetchArticle(ContentItemID);
+				caller {
+					host: ! NewsDeskServer;
+				}
+				callee {
+					merge host: ! StagingServer;
+				}
+			}	
+			advice {
+				service: viewedContentItem(ciID);
+				type: after;
+			}
+		} 
+	}
+}

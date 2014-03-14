@@ -1,0 +1,16 @@
+application CNN_NP_NewspaperApp refines NP_NewspaperApp, CNN_Env {
+	host AccountingServer 	is "billing.cnn.com";
+	host AuthServer 		is "signin.cnn.com";
+	
+	NewspaperSecurityConnector		secnConn	on PublishingServer;
+
+	connector NewspaperSecurityConnector refines SecuredNewspaperApp.NewspaperSecurityConnector {
+		ao-composition ServiceUsage refines SecuredNewspaperApp.NewspaperSecurityConnector.ServiceUsage {
+			pointcut {
+				caller {
+					merge host: ! Intranet;
+				}
+			}
+		}
+	}
+}

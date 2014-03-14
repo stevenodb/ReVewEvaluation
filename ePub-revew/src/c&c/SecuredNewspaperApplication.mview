@@ -1,0 +1,21 @@
+abstract application SecuredNewspaperApp refines BasicNewspaperApp {
+
+	host AuthServer;
+
+	AuthenticationService			auths		on AuthServer;
+	SecurityContextService			secCtx		on PublishingServer;
+	NewspaperSecurityConnector		secnConn	on PublishingServer;
+		
+	connector NewspaperSecurityConnector refines ServiceSecurityConnector {
+		abstract ao-composition ServiceUsage refines ServiceSecurityConnector.ServiceUsage {
+			pointcut {
+				caller {
+					component: ! NewsDesk;
+				}
+				callee {
+					host: PublishingServer;
+				}
+			}			
+		}
+	}
+}

@@ -1,0 +1,1 @@
+abstract application LB_NewspaperApp refines LB_AccountedNewspaperApp, LB_PersonalizedNewspaperApp, SecuredNewspaperApp {}

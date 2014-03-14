@@ -1,0 +1,22 @@
+application CNN_LB_StagedNewspaperApp refines StagedNewspaperApp, CNN_LBNewspaperApp {
+	host StagingServer is "staging.intranet.cnn.com";
+	
+	StagedNpAccnConnectorAlt1	accnConn 		on PublishingServer;
+	StagedNpAccnConnectorAlt2	accnConnAlt2 	on PublishingServer;
+	StagedTrackedNpConnector	traNSConn		on ServicesServer;
+
+	connector StagedNpAccnConnectorAlt1 refines	NewspaperAccountingConnectorAlt1, StagedNewspaperStemConnector {
+		ao-composition ServiceUsage refines NewspaperAccountingConnectorAlt1.ServiceUsage, StagedStemCompositon {
+		}
+	}	
+
+	connector StagedNpAccnConnectorAlt2 refines NewspaperAccountingConnectorAlt2, StagedNewspaperStemConnector {
+		ao-composition ServiceUsage refines NewspaperAccountingConnectorAlt2.ServiceUsage, StagedStemCompositon {
+		}
+	}
+	
+	connector StagedTrackedNpConnector refines TrackedNewspaperConnector, StagedNewspaperStemConnector {
+		ao-composition TrackViewing refines TrackedNewspaperConnector.TrackViewing, StagedStemCompositon {} 
+		ao-composition TrackListing refines TrackedNewspaperConnector.TrackListing, StagedStemCompositon {} 
+	}
+}

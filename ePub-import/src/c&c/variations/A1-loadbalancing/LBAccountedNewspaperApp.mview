@@ -1,0 +1,64 @@
+abstract application LB_AccountedNewspaperApp {//refines AccountedNewspaperApp, LoadBalancedNewspaperApp {
+	
+	host AccountingServerAlt2;
+	
+	NewspaperAccountingConnectorAlt1 	accnConn		on PublishingServer;
+	NewspaperAccountingConnectorAlt2 	accnConnAlt2	on PublishingServerAlt2;
+	AccountingService					accsAlt2		on AccountingServerAlt2;
+	
+	connector NewspaperAccountingConnectorAlt1 {//refines NewspaperAccountingConnector {
+
+		require {
+			AccountingRemote
+		}
+
+		ao-composition ServiceUsage {//refines NewspaperAccountingConnector.ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					component: NewspaperService;
+					interface: NewsRemote;
+					override instance: ns;			
+				}
+			}
+			advice {
+				type: after;
+				instance: accs;
+				service: chargeForService();
+			}
+		}
+	}
+	
+	connector NewspaperAccountingConnectorAlt2 {//refines NewspaperAccountingConnector {
+
+		require {
+			AccountingRemote
+		}
+
+		ao-composition ServiceUsage {//refines NewspaperAccountingConnector.ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					component: NewspaperService;
+					override instance: nsAlt2;
+					interface: NewsRemote;
+				}
+			}
+			advice {
+				type: after;
+				service: chargeForService();
+				instance: accsAlt2;			
+			}
+		}		
+	}
+}

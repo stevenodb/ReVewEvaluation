@@ -1,0 +1,24 @@
+connector PersonalizedContentConnector {
+	
+	require {
+		PersonalizationRemote
+	}
+
+	abstract ao-composition PersonalizeContent {
+		pointcut {
+			kind: call;
+			signature: * *(*);
+			caller {
+				// exclude the component doing personalization
+				interface: ! PersonalizationRemote;
+			}
+			callee {
+				interface: ContentBrowseRemote;
+			}
+		}
+		advice {
+			service: personalizeContentBrowseCall();
+			type: around;
+		}
+	}
+}

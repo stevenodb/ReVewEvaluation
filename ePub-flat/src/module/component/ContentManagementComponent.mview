@@ -1,0 +1,6 @@
+component ContentManagementSystem {
+
+	provide {
+		ContentBrowseRemote
+	}
+}

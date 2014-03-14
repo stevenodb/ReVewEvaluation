@@ -1,0 +1,150 @@
+interface NewsRemote {
+	Tag getTag(String tag);
+	Category getCategory(String cat);
+	Collection<Category> getTopLevelCategories();
+	Collection<Category> getSubCategories(Category category);
+	Collection<Tag> getTagCloud();
+	Collection<ArticleListEntry> listHeadLines(int amount);
+	String getShortVersion(ContentItemId contentId);
+	ContentItem fetchArticleA(ContentItemId contentId);
+	Collection<ArticleListEntry> listNewestArticles(int amount);
+	Collection<ArticleListEntry> listArticlesForTag(Tag tag);
+	Collection<ArticleListEntry> listArticlesForCategory(Category category);
+}
+
+interface ContentInputRemote {
+	ContentItemId addAdvertisement(ContentItem advertisement);
+	ContentItemId addArticle(ContentItem article);
+}
+ 
+interface ManagementRemote {
+	ViewStatistics getAverageViewerProfile(ContentItemId contentId);
+	ViewStatistics getAverageViewerProfileForTag(Tag tag);
+	Collection<Category> getTopLevelCategories();
+	Collection<Category> getSubCategories(Category category);
+	Category getCategory(String categoryName);
+	void addCategories(Set<String> catLst, Category parent);
+	Tag getTag(String tagName);
+	Set<Tag> searchTagsContaining(String name);
+	void addTags(Set<String> tagLst);
+	Collection<UserListEntry> searchMediaConsumers(String firstName, String lastName);
+	Collection<UserListEntry> searchAdvertisers(String firstName, String lastName);
+	MediaConsumerProfile getMediaConsumerProfile(UserId consumerId);
+	AdvertiserProfile getAdvertiserProfile(UserId advertiserId);
+	Collection<ArticleListEntry> listArticles(Tag tag, int amount);
+}
+
+interface UserProfileRemote {
+	List<UserId> getUsersWithOpenInvoice();
+	void addViewLogEntry(ViewLogEntry entry);
+	Collection<ViewLogEntry> consultViewLog(UserId userId, int nEntries);
+	Collection<ViewLogEntry> consultViewLog(UserId userId, Date sinceDate);
+	long getNbViews(UserId userId, ContentItemId contentId);
+	long getNbViews(UserId userId, Tag tag);
+	Collection<TagViewLogEntry> getViewLogEntriesForTag(Tag tag);
+	Collection<ContentItemViewLogEntry> getViewLogEntriesForContentItemId(ContentItemId contentId);
+	UserId createAdvertiserProfile(String firstName, String password);
+	UserId createCorporateNewsDeskWorkerProfile(String firstName, String surName, ContactInformation contactInfo, PaymentInformation paymentInformation, String password);
+	UserId createMediaConsumerProfile(String firstName, String surName, ContactInformation contactInfo, PaymentInformation paymentInformation, String password);
+	UserType getUserType(UserId userId);
+	UserProfile getUserProfile(UserId userId);
+	MediaConsumerProfile getMediaConsumerProfile(UserId userId);
+	AdvertiserProfile getAdvertiserProfile(UserId userId);
+	CorporateNewsDeskWorkerProfile getCorporateNewsDeskWorkerProfile(UserId userId);
+	boolean checkPassword(UserId userId, String password);
+	void updateUserProfile(UserId userId, UserProfile userProfile);
+	void updateMediaConsumerProfile(UserId userId, MediaConsumerProfile userProfile);
+	void updateAdvertiserProfile(UserId userId, AdvertiserProfile userProfile);
+	void updateCorporateNewsDeskWorkerProfile(UserId userId, CorporateNewsDeskWorkerProfile userProfile);
+	void setPassword(UserId userId, String oldPwd, String newPassword);
+	List<UserListEntry> listMediaConsumers(String fname, String sname);
+	List<UserListEntry> listAdvertisers(String fname, String sname);
+	UserId getUserIDForEmail(String email);
+}
+
+interface UserTrackingRemote {
+	void consultedTag(Tag tag);
+	void viewedContentItem(ContentItemId Id);
+	void evaluateInterests();
+}
+
+interface ContentBrowseRemote {
+	void addReservation(Reservation reservation);
+	Collection<Reservation> getReservationsByOwner(UserId ownerId);
+	Collection<Reservation> getReservationsByAdvertisementId(ContentItemId adId);
+	Collection<Reservation> getReservationsByDate(Date date);
+	Collection<Reservation> getReservationsBySize(Size size);
+	Collection<Reservation> getReservationsByTag(Tag tag);
+	Map<Reservation,Integer> getReservationsByTags(Set<Tag> tags);
+	ContentItem<AdvertisementProfile> getAdvertisementById(ContentItemId adId);
+	Collection<AdvertisementListEntry> getAdvertisementsByAdvertiser(UserId advertiserId);
+	ContentItem<ArticleProfile> getArticleById(ContentItemId ciId);
+	Collection<ArticleListEntry> getArticlesByTag(Tag tag, int amount);
+	Collection<ArticleListEntry> getArticlesByCategory(Category category, int amount);
+	Collection<ArticleListEntry> getNewestArticles(int n);
+	void addTags(Set<String> tagLst);
+	void addCategories(Set<String> catLst, Category parent);
+	Set<Tag> getAllTags();
+	LinkedHashMap<Tag, Integer> getTagsByPopularity(int n);
+	Map<Category, Integer> getCategoriesByPopularity(int n);
+	Set<Tag> getTagsContaining(String subString);
+	SortedSet<Category> getSubCategories(Category category);
+	SortedSet<Category> getTopLevelCategories();
+	Category getCategory(String category);
+	Tag getTag(String tag);
+	boolean hasCategory(String category);
+	boolean hasTag(String tag);
+}
+
+interface PersonalizationRemote {
+	void personalizeContentBrowseCall();
+}
+
+interface ProfileManagementRemote {
+	UserId createAccount(String password, String firstname, String surname, String address, String phone, String email, String paymentDetails);
+	void setAdditionalInformation(Gender gender, YearlyIncome amount, MaritalState maritalState);
+	void setInterestInTags(List<String> tags);
+	void setSubScriptionPeriod( Period period );
+	Period getSubScriptionDetails();
+	MediaConsumerProfile consultProfile();
+}
+
+interface AccountManagementRemote {
+	void handleOpenInvoices();
+	List<UserId> listUsersWithOpenInvoiceEntries();
+	UserProfile getUserProfile(UserId user);
+}
+
+interface ClientHome {
+	void start();
+	void stop();
+}
+
+interface AccountingRemote {
+	void chargeForSubscription(Period period);
+	void chargeForService(Object[] arguments);
+	void chargeForReservation(Reservation reservation);
+}
+
+interface UserCredentials {
+	void pushUserToken();
+	void storeUserToken(Token token);
+}
+
+interface SecurityContext {
+	void checkSecurityContext(ContextId cID);
+}
+
+interface Authentication {
+	Token authenticate(String userId, String pwd);	
+} 
+
+
+interface PseudoInterface {
+	void pseudoAdvice();
+	void pseudoAdvice2();
+}
+
+interface LoadBalanceRemote {
+	void balanceCall();
+}

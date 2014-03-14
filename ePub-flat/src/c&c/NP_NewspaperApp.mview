@@ -1,0 +1,77 @@
+abstract application NP_NewspaperApp {
+
+	host AccountingServer;
+	host PublishingServer;
+	host ClientTerminal;
+	host ContentManagementServer;
+	host UserManagementServer;
+	host NewsDeskServer;
+	host Intranet;
+	host AuthServer;
+
+	AuthenticationService			auths		on AuthServer;
+	SecurityContextService			secCtx		on PublishingServer;
+	NewspaperSecurityConnector		secnConn	on PublishingServer;	
+	ContentManagementSystem			cms			on ContentManagementServer;
+	Client							cli			on ClientTerminal;		
+	NewspaperService				ns			on PublishingServer;	
+	UserManagementSystem			ums			on UserManagementServer;
+	NewsDesk						nd			on NewsDeskServer;	
+	AccountingService 				accs		on AccountingServer;
+	NewspaperAccountingConnector	accnConn 	on PublishingServer;
+	
+	connector NewspaperAccountingConnector {//refines ServiceAccountingConnector {
+
+		require {
+			AccountingRemote
+		}
+
+		ao-composition ServiceUsage {//refines ServiceAccountingConnector.ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					component: NewspaperService;
+					interface: NewsRemote;
+				}
+			}
+			advice {
+				type: after;
+				service: chargeForService();
+			}
+		}
+	}
+	
+	connector NewspaperSecurityConnector {// refines ServiceSecurityConnector {
+	
+		require {
+			SecurityContext
+		}
+
+		abstract ao-composition ServiceUsage {//refines ServiceSecurityConnector.ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				caller {
+					component: ! NewsDesk;
+				}
+				callee {
+					host: PublishingServer;
+					interface: NewsRemote;
+				}
+			}
+			advice {
+				service: checkSecurityContext(cid);
+				type: around;
+			}
+		}
+	}
+}

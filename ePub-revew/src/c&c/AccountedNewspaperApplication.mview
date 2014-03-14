@@ -1,0 +1,11 @@
+abstract application AccountedNewspaperApp refines BasicNewspaperApp {
+	
+	host AccountingServer;
+	
+	AccountingService 				accs		on AccountingServer;
+	NewspaperAccountingConnector	accnConn 	on PublishingServer;
+	
+	connector NewspaperAccountingConnector refines ServiceAccountingConnector {
+		ao-composition ServiceUsage refines ServiceAccountingConnector.ServiceUsage {			pointcut {				callee {					component: NewspaperService;				}			}		}
+	}
+}

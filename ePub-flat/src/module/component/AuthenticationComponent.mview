@@ -1,0 +1,10 @@
+component AuthenticationService {
+	
+	provide {
+		Authentication
+	}
+	
+	require {
+		UserProfileRemote
+	}
+}

@@ -1,0 +1,34 @@
+abstract application LB_AccountedNewspaperApp refines AccountedNewspaperApp, LoadBalancedNewspaperApp {
+	
+	host AccountingServerAlt2;
+	
+	NewspaperAccountingConnectorAlt1 	accnConn		on PublishingServer;
+	NewspaperAccountingConnectorAlt2 	accnConnAlt2	on PublishingServerAlt2;
+	AccountingService					accsAlt2		on AccountingServerAlt2;
+	
+	connector NewspaperAccountingConnectorAlt1 refines NewspaperAccountingConnector {
+		ao-composition ServiceUsage refines NewspaperAccountingConnector.ServiceUsage {
+			pointcut {
+				callee { 
+					override instance: ns;
+				}
+			}
+			advice {
+				instance: accs;
+			} 
+		}
+	}
+	
+	connector NewspaperAccountingConnectorAlt2 refines NewspaperAccountingConnector {
+		ao-composition ServiceUsage refines NewspaperAccountingConnector.ServiceUsage {
+			pointcut {
+				callee {
+					override instance: nsAlt2;
+				}
+			}
+			advice {
+				instance: accsAlt2;
+			}
+		}		
+	}
+}

@@ -1,0 +1,75 @@
+abstract application PersonalizedNewspaperApp refines BasicNewspaperApp {
+	
+	host ServicesServer;
+	
+	PersonalizationService				persoServ	on ServicesServer;
+	UserTrackingService					utServ		on ServicesServer;
+	TrackedNewspaperConnector			traNSConn	on ServicesServer;
+	PersonalizedCMSConnector			persCMSConn on ServicesServer;
+
+	connector PersonalizedCMSConnector {//refines PersonalizedContentConnector {
+		
+		require {
+			PersonalizationRemote
+		}
+		
+		ao-composition personalizeCMS {//refines PersonalizedContentConnector.PersonalizeContent {
+			pointcut {
+				kind: call;
+				signature: * *(*);
+				caller {
+					interface: ! PersonalizationRemote;
+					instance: ns;
+				}
+				callee {
+					interface: ContentBrowseRemote;
+				}
+			advice {
+				service: personalizeContentBrowseCall();
+				type: around;
+			}
+		}
+	}
+	
+	connector TrackedNewspaperConnector {//refines ServiceTrackingConnector {
+	
+		require {
+			UserTrackingRemote
+		}
+		
+		ao-composition TrackViewing {//refines ServiceTrackingConnector.TrackViewing {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					interface: NewsRemote;
+				}
+				caller {
+					host: ! NewsDeskServer; 
+				}
+			}
+			advice {
+				service: consultedTag(tag);
+				type: after;
+			}
+		}
+		
+		ao-composition TrackListing {//refines ServiceTrackingConnector.TrackListing {
+			pointcut {
+				kind: execution;
+				signature: ContentItem fetchArticle(ContentItemID);
+				caller {
+					host: ! NewsDeskServer;
+				}
+			}	
+			advice {
+				service: viewedContentItem(ciID);
+				type: after;
+			}
+		}
+	}
+}

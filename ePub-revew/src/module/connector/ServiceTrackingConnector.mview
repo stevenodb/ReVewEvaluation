@@ -1,0 +1,24 @@
+connector ServiceTrackingConnector refines ServiceUsageConnector {
+
+	require {
+		UserTrackingRemote
+	}
+	
+	abstract ao-composition TrackListing refines ServiceUsageConnector.ServiceUsage {
+		advice {
+			method: consultedTag(tag);
+			type: after;
+		}
+	}
+
+	abstract ao-composition TrackViewing {
+		pointcut {
+			kind: execution;
+			signature: ContentItem fetchArticle(ContentItemID);
+		}	
+		advice {
+			method: viewedContentItem(ciID);
+			type: after;
+		}
+	}
+}

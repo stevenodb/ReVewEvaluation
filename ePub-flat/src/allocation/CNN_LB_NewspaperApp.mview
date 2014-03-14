@@ -1,0 +1,237 @@
+application CNN_LB_NewspaperApp {
+
+	host PublishingServer			is "news.cnn.com";
+	host UserManagementServer 		is "udb.cnn.com";
+	host ContentManagementServer 	is "content.cnn.com";
+	host NewsDeskServer				is "newsdesk.intranet.cnn.com";
+ 	host ClientTerminal 			is "*";
+ 	host AuthServer					is "signin.cnn.com";
+	host PublishingServerAlt2		is "pub1.cnn.com";
+	host AccountingServer			is "billing.cnn.com";
+	host AccountingServerAlt2		is "billing2.cnn.com";
+	host ServicesServer				is "feature.cnn.com";
+	host ServicesServerAlt2			is "feature2.cnn.com";
+	host Proxy						is "proxy.cnn.com";
+	host Intranet					is "*.intranet.cnn.com";
+
+	LoadBalancedNS				lbNS			on Proxy;
+	LoadBalancedNSConnector		lbNSConn		on Proxy;
+	NewspaperService			nsAlt2			on PublishingServerAlt2;
+	ContentManagementSystem		cms				on ContentManagementServer;
+	Client						cli				on ClientTerminal;		
+	NewspaperService			ns				on PublishingServer;	
+	UserManagementSystem		ums				on UserManagementServer;
+	NewsDesk					nd				on NewsDeskServer;
+	NewspaperAccountingConnectorAlt1 accnConn 	on PublishingServer;
+	NewspaperAccountingConnectorAlt2 accnConnAlt2 	on PublishingServerAlt2;
+	TrackedNewspaperConnector	traNSConn		on ServicesServer;
+	AccountingService 			accs			on AccountingServer;
+	AccountingService			accsAlt2		on AccountingServerAlt2;
+	PersonalizedCMSConnectorAlt1 persCMSConn	 on ServicesServer;
+	PersonalizedCMSConnectorAlt2 persCMSConnAlt2 on ServicesServerAlt2;
+	PersonalizationService		persoServ		on ServicesServer;
+	PersonalizationService		persoServAlt2	on ServicesServerAlt2;
+	UserTrackingService			utServ			on ServicesServer;
+	AuthenticationService		auths			on AuthServer;
+	SecurityContextService		secCtx			on PublishingServer;
+	NewspaperSecurityConnector	secnConn		on PublishingServer;
+
+	connector LoadBalancedNSConnector {
+	
+		require {
+			LoadBalanceRemote
+		}
+	
+		ao-composition LoadBalancing {
+			pointcut {
+				callee {
+					interface: NewsRemote;
+					component: NewspaperService;
+				}
+			}
+			advice {
+				service: balanceCall();
+			}		
+		}
+	}
+	
+	connector NewspaperSecurityConnector {
+	
+		require {
+			SecurityContext
+		}
+	
+		ao-composition ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				caller {
+					component: ! NewsDesk;
+					merge host: ! Intranet;
+				}
+				callee {
+					interface: NewsRemote;
+					host: PublishingServer;
+				}
+			}
+			advice {
+				service: checkSecurityContext(cid);
+				type: around;
+			}
+		}
+	}
+	
+	connector NewspaperAccountingConnectorAlt1 {
+	
+		require {
+			AccountingRemote
+		}
+	
+		ao-composition ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					interface: NewsRemote;
+					component: NewspaperService;
+					instance: ns;
+				}
+			}
+			advice {
+				type: after;
+				service: chargeForService();
+				instance: accs;
+			} 			
+		}
+	}	
+
+	connector NewspaperAccountingConnectorAlt2 {
+	
+		require {
+			AccountingRemote
+		}
+	
+		ao-composition ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					interface: NewsRemote;
+					component: NewspaperService;
+					instance: nsAlt2;
+				}
+			}
+			advice {
+				type: after;
+				service: chargeForService();
+				instance: accsAlt2;
+			}
+		}
+	}
+	
+	connector PersonalizedCMSConnectorAlt1 {
+	
+		require {
+			PersonalizationRemote
+		}
+	
+		ao-composition personalizeCMS {
+			pointcut {
+				kind: call;
+				signature: * *(*);
+				callee {
+					interface: ContentBrowseRemote;
+				}
+				caller {
+					// exclude the component doing personalization
+					interface: ! PersonalizationRemote;
+					instance: ns;
+				}
+			}
+			advice {
+				service: personalizeContentBrowseCall();
+				type: around;
+				instance: persoServ;
+			}
+		}	
+	}
+	
+	connector PersonalizedCMSConnectorAlt2 {
+	
+		require {
+			PersonalizationRemote
+		}
+		
+		ao-composition personalizeCMS {
+			pointcut {
+				kind: call;
+				signature: * *(*);
+				callee {
+					interface: ContentBrowseRemote;
+				}
+				caller {
+					// exclude the component doing personalization
+					interface: ! PersonalizationRemote;
+					instance: nsAlt2;
+				}
+			}
+			advice {
+				service: personalizeContentBrowseCall();
+				type: around;
+				instance: persoServAlt2;
+			}
+		}	
+	}
+	
+	connector TrackedNewspaperConnector {
+	
+		require {
+			UserTrackingRemote
+		}
+		
+		ao-composition TrackViewing {
+			pointcut {
+				caller {
+					host: ! NewsDeskServer; 
+				}
+			}
+			advice {
+				service: viewedContentItem(ciID);
+				type: after;
+			}
+		} 
+
+		ao-composition TrackListing {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					interface: NewsRemote;
+				}
+				caller {
+					host: ! NewsDeskServer;
+				}
+			}
+			advice {
+				service: consultedTag(tag);
+				type: after;
+			}			
+		} 
+	}
+}

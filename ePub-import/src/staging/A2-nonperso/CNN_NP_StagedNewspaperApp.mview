@@ -1,0 +1,32 @@
+application CNN_NP_StagedNewspaperApp {//refines StagedNewspaperApp, CNN_NP_NewspaperApp {
+	host StagingServer is "staging.intranet.cnn.com";
+	
+	StagedNpAccnConnector		accnConn 		on PublishingServer;
+	
+	connector StagedNpAccnConnector {//refines NewspaperAccountingConnector, StagedNewspaperStemConnector {
+
+		require {
+			AccountingRemote
+		}
+
+		ao-composition ServiceUsage {//refines NewspaperAccountingConnector.ServiceUsage, StagedStemCompositon {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					merge host: ! StagingServer;
+					component: NewspaperService;
+					interface: NewsRemote;
+				}
+			}
+			advice {
+				type: after;
+				service: chargeForService();
+			}
+		}
+	}
+}

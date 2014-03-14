@@ -1,0 +1,60 @@
+abstract application LB_PersonalizedNewspaperApp {//refines PersonalizedNewspaperApp, LoadBalancedNewspaperApp {
+	
+	host ServicesServerAlt2;
+	
+	PersonalizedCMSConnectorAlt1 		persCMSConn			on ServicesServer;
+	PersonalizedCMSConnectorAlt2 		persCMSConnAlt2		on ServicesServerAlt2;
+	PersonalizationService				persoServAlt2		on ServicesServerAlt2;
+	
+	connector PersonalizedCMSConnectorAlt1 {//refines PersonalizedCMSConnector {
+
+		require {
+			PersonalizationRemote
+		}
+		
+		ao-composition personalizeCMS {//refines PersonalizedCMSConnector.personalizeCMS {
+			pointcut {
+				kind: call;
+				signature: * *(*);
+				caller {
+					override instance: ns;
+					interface: ! PersonalizationRemote;
+				}
+				callee {
+					interface: ContentBrowseRemote;
+				}
+			}
+			advice {
+				service: personalizeContentBrowseCall();
+				type: around;
+				instance: persoServ;
+			}
+		}	
+	}
+	
+	connector PersonalizedCMSConnectorAlt2 {//refines PersonalizedCMSConnector {
+
+		require {
+			PersonalizationRemote
+		}
+		
+		ao-composition personalizeCMS {//refines PersonalizedCMSConnector.personalizeCMS {
+			pointcut {
+				kind: call;
+				signature: * *(*);
+				caller {
+					interface: ! PersonalizationRemote;
+					override instance: nsAlt2;
+				}
+				callee {
+					interface: ContentBrowseRemote;
+				}
+			}
+			advice {
+				service: personalizeContentBrowseCall();
+				type: around;
+				instance: persoServAlt2;
+			}
+		}	
+	}
+}

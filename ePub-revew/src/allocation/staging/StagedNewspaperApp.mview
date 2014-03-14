@@ -1,0 +1,14 @@
+abstract application StagedNewspaperApp {
+	host StagingServer;
+	NewspaperService				stagingNS	on StagingServer;
+	
+	abstract connector StagedNewspaperStemConnector {
+		abstract ao-composition StagedStemCompositon {
+			pointcut {
+				callee {
+					merge host: ! StagingServer;
+				}
+			}
+		}
+	}
+}

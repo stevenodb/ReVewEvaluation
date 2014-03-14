@@ -1,0 +1,35 @@
+connector ServiceTrackingConnector {//refines ServiceUsageConnector {
+
+	require {
+		UserTrackingRemote
+	}
+	
+	abstract ao-composition TrackListing {//refines ServiceUsageConnector.ServiceUsage {
+		pointcut {
+			kind: execution;
+			signature:
+				ContentItem fetchArticle(ContentItemId),
+				Collection listArticlesForTag(Tag),
+				Collection listNewestArticles(Integer),
+				Pair listArticlesForCategory(Category);
+			callee {
+				interface: NewsRemote;
+			}
+		}
+		advice {
+			service: consultedTag(tag);
+			type: after;
+		}
+	}
+
+	abstract ao-composition TrackViewing {
+		pointcut {
+			kind: execution;
+			signature: ContentItem fetchArticle(ContentItemID);
+		}	
+		advice {
+			service: viewedContentItem(ciID);
+			type: after;
+		}
+	}
+}

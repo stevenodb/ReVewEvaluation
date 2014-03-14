@@ -1,0 +1,8 @@
+application CNN_Env refines BasicNewspaperApp {
+	host PublishingServer			is "news.cnn.com";
+	host UserManagementServer 		is "udb.cnn.com";
+	host ContentManagementServer 	is "content.cnn.com";
+	host NewsDeskServer				is "newsdesk.intranet.cnn.com";
+ 	host ClientTerminal 			is "*";
+ 	host Intranet					is "*.intranet.cnn.com";
+}

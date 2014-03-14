@@ -1,0 +1,8 @@
+application NYTimes_Env refines BasicNewspaperApp {
+	host PublishingServer			is "published.nytimes.com";
+	host UserManagementServer 		is "customers.nytimes.com";
+	host ContentManagementServer 	is "data.nytimes.com";
+	host NewsDeskServer				is "workers.nytimes.com";
+ 	host ClientTerminal 			is "*";
+ 	host Intranet					is "*.private.nytimes.com";
+}

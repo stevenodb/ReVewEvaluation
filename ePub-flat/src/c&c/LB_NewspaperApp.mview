@@ -1,0 +1,217 @@
+abstract application LB_NewspaperApp {
+	
+	host ServicesServer;
+	host AccountingServer;
+	host ServicesServerAlt2;
+	host AccountingServerAlt2;
+	host AuthServer;
+	host PublishingServer;
+	host ClientTerminal;
+	host ContentManagementServer;
+	host UserManagementServer;
+	host NewsDeskServer;
+	host Intranet;
+	host Proxy;
+	host PublishingServerAlt2;
+	
+	LoadBalancedNS						lbNS			on Proxy;
+	LoadBalancedNSConnector				lbNSConn		on Proxy;
+	NewspaperService					nsAlt2			on PublishingServerAlt2;	
+	ContentManagementSystem				cms				on ContentManagementServer;
+	Client								cli				on ClientTerminal;		
+	NewspaperService					ns				on PublishingServer;	
+	UserManagementSystem				ums				on UserManagementServer;
+	NewsDesk							nd				on NewsDeskServer;
+	AuthenticationService				auths			on AuthServer;
+	SecurityContextService				secCtx			on PublishingServer;
+	AccountingService 					accs			on AccountingServer;
+	NewspaperSecurityConnector			secnConn		on PublishingServer;	
+	NewspaperAccountingConnectorAlt1 	accnConn		on PublishingServer;
+	NewspaperAccountingConnectorAlt2 	accnConnAlt2	on PublishingServerAlt2;
+	AccountingService					accsAlt2		on AccountingServerAlt2;
+	PersonalizationService				persoServ		on ServicesServer;
+	UserTrackingService					utServ			on ServicesServer;	
+	TrackedNewspaperConnector			traNSConn		on ServicesServer;
+	PersonalizedCMSConnectorAlt1 		persCMSConn		on ServicesServer;
+	PersonalizedCMSConnectorAlt2 		persCMSConnAlt2	on ServicesServerAlt2;
+	PersonalizationService				persoServAlt2	on ServicesServerAlt2;
+
+	connector NewspaperAccountingConnectorAlt1 {//refines NewspaperAccountingConnector {
+
+		require {
+			AccountingRemote
+		}
+
+		ao-composition ServiceUsage {//refines NewspaperAccountingConnector.ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					component: NewspaperService;
+					interface: NewsRemote;
+					override instance: ns;			
+				}
+			}
+			advice {
+				type: after;
+				instance: accs;
+				service: chargeForService();
+			}
+		}
+	}
+	
+	connector NewspaperAccountingConnectorAlt2 {//refines NewspaperAccountingConnector {
+
+		require {
+			AccountingRemote
+		}
+
+		ao-composition ServiceUsage {//refines NewspaperAccountingConnector.ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					component: NewspaperService;
+					override instance: nsAlt2;
+					interface: NewsRemote;
+				}
+			}
+			advice {
+				type: after;
+				service: chargeForService();
+				instance: accsAlt2;			
+			}
+		}		
+	}
+	
+	connector PersonalizedCMSConnectorAlt1 {//refines PersonalizedCMSConnector {
+
+		require {
+			PersonalizationRemote
+		}
+		
+		ao-composition personalizeCMS {//refines PersonalizedCMSConnector.personalizeCMS {
+			pointcut {
+				kind: call;
+				signature: * *(*);
+				caller {
+					override instance: ns;
+					interface: ! PersonalizationRemote;
+				}
+				callee {
+					interface: ContentBrowseRemote;
+				}
+			}
+			advice {
+				service: personalizeContentBrowseCall();
+				type: around;
+				instance: persoServ;
+			}
+		}	
+	}
+	
+	connector PersonalizedCMSConnectorAlt2 {//refines PersonalizedCMSConnector {
+
+		require {
+			PersonalizationRemote
+		}
+		
+		ao-composition personalizeCMS {//refines PersonalizedCMSConnector.personalizeCMS {
+			pointcut {
+				kind: call;
+				signature: * *(*);
+				caller {
+					interface: ! PersonalizationRemote;
+					override instance: nsAlt2;
+				}
+				callee {
+					interface: ContentBrowseRemote;
+				}
+			}
+			advice {
+				service: personalizeContentBrowseCall();
+				type: around;
+				instance: persoServAlt2;
+			}
+		}	
+	}
+	
+	connector NewspaperSecurityConnector {// refines ServiceSecurityConnector {
+	
+		require {
+			SecurityContext
+		}
+
+		abstract ao-composition ServiceUsage {//refines ServiceSecurityConnector.ServiceUsage {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				caller {
+					component: ! NewsDesk;
+				}
+				callee {
+					host: PublishingServer;
+					interface: NewsRemote;
+				}
+			}
+			advice {
+				service: checkSecurityContext(cid);
+				type: around;
+			}
+		}
+	}
+
+	connector TrackedNewspaperConnector {//refines ServiceTrackingConnector {
+	
+		require {
+			UserTrackingRemote
+		}
+		
+		ao-composition TrackViewing {//refines ServiceTrackingConnector.TrackViewing {
+			pointcut {
+				kind: execution;
+				signature:
+					ContentItem fetchArticle(ContentItemId),
+					Collection listArticlesForTag(Tag),
+					Collection listNewestArticles(Integer),
+					Pair listArticlesForCategory(Category);
+				callee {
+					interface: NewsRemote;
+				}
+				caller {
+					host: ! NewsDeskServer; 
+				}
+			}
+			advice {
+				service: consultedTag(tag);
+				type: after;
+			}
+		}
+		
+		ao-composition TrackListing {//refines ServiceTrackingConnector.TrackListing {
+			pointcut {
+				kind: execution;
+				signature: ContentItem fetchArticle(ContentItemID);
+				caller {
+					host: ! NewsDeskServer;
+				}
+			}	
+			advice {
+				service: viewedContentItem(ciID);
+				type: after;
+			}
+		}
+	}
+}

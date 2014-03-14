@@ -1,0 +1,16 @@
+application NYT_NP_NewspaperApp refines NP_NewspaperApp, NYTimes_Env {
+	host AccountingServer 	is "accounting.nytimes.com";
+	host AuthServer 		is "auth.nytimes.com";
+		
+	NewspaperSecurityConnector		secnConn	on PublishingServer;
+	
+	connector NewspaperSecurityConnector refines SecuredNewspaperApp.NewspaperSecurityConnector {
+		ao-composition ServiceUsage refines SecuredNewspaperApp.NewspaperSecurityConnector.ServiceUsage {
+			pointcut {
+				caller {
+					merge host: ! Intranet;
+				}
+			}
+		}
+	}
+}

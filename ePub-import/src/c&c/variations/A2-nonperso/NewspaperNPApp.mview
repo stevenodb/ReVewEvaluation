@@ -1,0 +1,1 @@
+abstract application NP_NewspaperApp {}//refines AccountedNewspaperApp, SecuredNewspaperApp {}
